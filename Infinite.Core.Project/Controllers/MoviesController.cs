@@ -1,4 +1,5 @@
 ﻿using Infinite.Core.Project.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -66,6 +67,7 @@ namespace Infinite.Core.Project.Controllers
             {
                 using (var client = new HttpClient())
                 {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", HttpContext.Session.GetString("token"));
                     client.BaseAddress = new Uri(_configuration["ApiUrl:api"]);
                     var result = await client.PostAsJsonAsync("Movies/CreateMovie", movie);
                     if (result.StatusCode == System.Net.HttpStatusCode.Created)
@@ -113,6 +115,7 @@ namespace Infinite.Core.Project.Controllers
             {
                 using (var client = new HttpClient())
                 {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", HttpContext.Session.GetString("token"));
                     client.BaseAddress = new Uri(_configuration["ApiUrl:api"]);
                     var result = await client.PutAsJsonAsync($"Movies/UpdateMovie/{movie.Id}", movie);
                     if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
@@ -135,38 +138,51 @@ namespace Infinite.Core.Project.Controllers
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            MovieViewModel movie = null;
-            using (var client = new HttpClient())
+            MovieViewModel movie = await this.MovieById(id);
+            if (movie != null)
             {
-                client.BaseAddress = new System.Uri(_configuration["ApiUrl:api"]);
-                var result = await client.GetAsync($"Movies/GetMovieById/{id}");
-                if (result.IsSuccessStatusCode)
-                {
-                    movie = await result.Content.ReadAsAsync<MovieViewModel>();
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Server Error. Please try later");
-                }
+                return View(movie);
             }
+            ModelState.AddModelError("", "Server Error. Please try later");
             return View(movie);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(MovieViewModel movie)
+        public async Task<IActionResult> Delete(MovieViewModel movieVM)
         {
             using (var client = new HttpClient())
             {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", HttpContext.Session.GetString("token"));
                 client.BaseAddress = new System.Uri(_configuration["ApiUrl:api"]);
-                var result = await client.DeleteAsync($"Movies/DeleteMovie/{movie.Id}");
+                var result = await client.DeleteAsync($"Movies/DeleteMovie/{movieVM.Id}");
                 if (result.IsSuccessStatusCode)
                 {
                     return RedirectToAction("Index");
                 }
                 else
                 {
-                    ModelState.AddModelError("", "Server Error. Please try later");
+                    return RedirectToAction("Login", "Accounts");
                 }
+            }            
+        }
+
+        [HttpGet]
+        [Route("Movies/Search/{genre?}")]
+        public async Task<IActionResult> Search(string genre)
+        {
+            if (genre != null)
+            {
+                List<MovieViewModel> movie = new();
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(_configuration["ApiUrl:api"]);
+                    var result = await client.GetAsync($"Movies/SearchMovie/{genre}");
+                    if (result.IsSuccessStatusCode)
+                    {
+                        movie = await result.Content.ReadAsAsync<List<MovieViewModel>>();
+                    }
+                }
+                return View(movie);
             }
             return View();
         }
@@ -185,6 +201,22 @@ namespace Infinite.Core.Project.Controllers
                 }
             }
             return genres;
+        }
+
+        [NonAction]
+        public async Task<MovieViewModel> MovieById(int id)
+        {
+            MovieViewModel movie = null;
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new System.Uri(_configuration["ApiUrl:api"]);
+                var result = await client.GetAsync($"Movies/GetMovieById/{id}");
+                if (result.IsSuccessStatusCode)
+                {
+                    movie = await result.Content.ReadAsAsync<MovieViewModel>();
+                }
+            }
+            return movie;
         }
     }
 }
