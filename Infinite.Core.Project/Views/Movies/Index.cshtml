@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Index";
 }
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css">
+
 
 <div class="row">
     <div class="col-md-7">
@@ -15,7 +17,7 @@
             </div>
         </div>
         <div class="row">
-            <table class="table table-hover">
+            <table id="tblMovies">
                 <thead>
                     <tr>
                         <th>Movie Name</th>
@@ -32,7 +34,7 @@
                             <td>
                                 <a asp-controller="Movies" asp-action="Details" asp-route-id="@item.Id">Details</a> |
                                 <a asp-controller="Movies" asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                                <a asp-controller="Movies" asp-action="Delete" asp-route-id="@item.Id">Delete</a> 
+                                <a asp-controller="Movies" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
                             </td>
                         </tr>
                     }
@@ -41,3 +43,13 @@
         </div>
     </div>
 </div>
+
+@section Scripts{
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function ($) {
+            $('#tblMovies').DataTable();
+        });
+    </script>
+}

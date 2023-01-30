@@ -26,7 +26,7 @@ namespace Infinite.Core.Project
             //Configure Session
             services.AddSession(o =>
             {
-                o.IdleTimeout = TimeSpan.FromMinutes(1);
+                o.IdleTimeout = TimeSpan.FromMinutes(10);
             });
             services.AddControllersWithViews();
         }
